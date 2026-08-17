@@ -7,13 +7,19 @@
   var videos = document.querySelectorAll("video");
   var reveals = document.querySelectorAll(".reveal");
   var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var headerFrame = 0;
 
   function updateHeader() {
     if (header) header.classList.toggle("is-scrolled", window.scrollY > 30);
+    headerFrame = 0;
+  }
+
+  function requestHeaderUpdate() {
+    if (!headerFrame) headerFrame = window.requestAnimationFrame(updateHeader);
   }
 
   updateHeader();
-  window.addEventListener("scroll", updateHeader, { passive: true });
+  window.addEventListener("scroll", requestHeaderUpdate, { passive: true });
 
   if (reduceMotion || !("IntersectionObserver" in window)) {
     reveals.forEach(function (element) { element.classList.add("is-visible"); });
@@ -24,7 +30,10 @@
         entry.target.classList.add("is-visible");
         revealObserver.unobserve(entry.target);
       });
-    }, { rootMargin: "0px 0px -8%", threshold: 0.08 });
+    }, {
+      rootMargin: window.innerWidth < 641 ? "0px 0px -4%" : "0px 0px -8%",
+      threshold: window.innerWidth < 641 ? 0.04 : 0.08
+    });
     reveals.forEach(function (element) {
       if (element.getBoundingClientRect().top < window.innerHeight * 0.98) {
         element.classList.add("is-visible");
@@ -59,6 +68,8 @@
   var chains = [];
   var tilings = [];
   var frame = 0;
+  var resizeTimer = 0;
+  var lastDraw = 0;
 
   function seeded(seed) {
     var value = Math.sin(seed * 999.91) * 43758.5453;
@@ -68,6 +79,7 @@
   function resize() {
     width = window.innerWidth;
     height = window.innerHeight;
+    ratio = Math.min(window.devicePixelRatio || 1, width < 700 ? 1.5 : 2);
     canvas.width = Math.round(width * ratio);
     canvas.height = Math.round(height * ratio);
     canvas.style.width = width + "px";
@@ -141,6 +153,11 @@
   }
 
   function draw(time) {
+    if (width < 700 && time - lastDraw < 32) {
+      if (!reduceMotion && !document.hidden) frame = window.requestAnimationFrame(draw);
+      return;
+    }
+    lastDraw = time;
     context.clearRect(0, 0, width, height);
     context.strokeStyle = "rgba(21, 20, 18, 0.17)";
     context.fillStyle = "rgba(21, 20, 18, 0.35)";
@@ -211,7 +228,10 @@
     }
     if (!reduceMotion && !frame) frame = window.requestAnimationFrame(draw);
   });
-  window.addEventListener("resize", resize, { passive: true });
+  window.addEventListener("resize", function () {
+    window.clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(resize, 140);
+  }, { passive: true });
   window.addEventListener("beforeunload", function () { cancelAnimationFrame(frame); });
   resize();
   draw(startTime);
