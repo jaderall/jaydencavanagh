@@ -595,6 +595,10 @@ figcaption {
     height: auto;
     object-fit: contain;
   }
+  .extangled-motion video {
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+  }
   .extangled-exhibition {
     grid-template-columns: 1fr;
     grid-template-rows: none;
