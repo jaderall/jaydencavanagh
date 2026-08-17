@@ -60,6 +60,7 @@
   if (!canvas) return;
   var context = canvas.getContext("2d");
   if (!context) return;
+  var touchDisplay = window.matchMedia("(hover: none)").matches;
 
   var width = 0;
   var height = 0;
@@ -69,7 +70,6 @@
   var tilings = [];
   var frame = 0;
   var resizeTimer = 0;
-  var lastDraw = 0;
 
   function seeded(seed) {
     var value = Math.sin(seed * 999.91) * 43758.5453;
@@ -153,11 +153,7 @@
   }
 
   function draw(time) {
-    if (width < 700 && time - lastDraw < 32) {
-      if (!reduceMotion && !document.hidden) frame = window.requestAnimationFrame(draw);
-      return;
-    }
-    lastDraw = time;
+    frame = 0;
     context.clearRect(0, 0, width, height);
     context.strokeStyle = "rgba(21, 20, 18, 0.17)";
     context.fillStyle = "rgba(21, 20, 18, 0.35)";
@@ -217,7 +213,9 @@
       }
     });
 
-    if (!reduceMotion && !document.hidden) frame = window.requestAnimationFrame(draw);
+    if (!reduceMotion && !document.hidden && width >= 700 && !touchDisplay) {
+      frame = window.requestAnimationFrame(draw);
+    }
   }
 
   document.addEventListener("visibilitychange", function () {
@@ -226,13 +224,24 @@
       frame = 0;
       return;
     }
-    if (!reduceMotion && !frame) frame = window.requestAnimationFrame(draw);
+    if (!reduceMotion && width >= 700 && !touchDisplay && !frame) {
+      frame = window.requestAnimationFrame(draw);
+    }
   });
   window.addEventListener("resize", function () {
     window.clearTimeout(resizeTimer);
-    resizeTimer = window.setTimeout(resize, 140);
+    resizeTimer = window.setTimeout(function () {
+      resize();
+      if (width < 700 || touchDisplay || reduceMotion) {
+        cancelAnimationFrame(frame);
+        frame = 0;
+        draw(startTime + 24000);
+      } else if (!frame) {
+        frame = window.requestAnimationFrame(draw);
+      }
+    }, 140);
   }, { passive: true });
   window.addEventListener("beforeunload", function () { cancelAnimationFrame(frame); });
   resize();
-  draw(startTime);
+  draw(width < 700 || touchDisplay || reduceMotion ? startTime + 24000 : startTime);
 })();
