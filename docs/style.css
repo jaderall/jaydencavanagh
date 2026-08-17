@@ -41,6 +41,7 @@ iframe {
 img,
 video {
   width: 100%;
+  height: auto;
   max-width: 100%;
 }
 
@@ -227,18 +228,6 @@ figcaption {
   margin-top: 1rem;
   overflow: hidden;
   background: #0b0b0b;
-}
-
-@supports (content-visibility: auto) {
-  @media (min-width: 641px) {
-  .extangled-exhibition,
-  .extangled-development,
-  .extangled-board,
-  .work-group {
-    content-visibility: auto;
-    contain-intrinsic-size: auto 900px;
-  }
-  }
 }
 
 .soundcloud-frame iframe {
